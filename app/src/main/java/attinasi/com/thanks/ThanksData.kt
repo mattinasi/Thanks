@@ -1,5 +1,7 @@
 package attinasi.com.thanks
 
+import java.security.InvalidParameterException
+
 open class ThanksData(t: String, txt: String) {
 
     val title = t
@@ -25,19 +27,26 @@ class ThanksDataStore {
 
     fun remove(thanksData: ThanksData) {
         val pos = data.indexOf(thanksData)
-        if (pos > 0) {
+        if (pos >= 0) {
             data.remove(thanksData)
             deletedData.add(DeletedThanksData(pos, thanksData))
+        } else {
+            throw InvalidParameterException()
         }
     }
 
     fun restore(thanksData: ThanksData) {
-        if (deletedData.contains(thanksData)) {
-            val d = deletedData.find { it == thanksData }
-            if (d != null) {
-                val pos = d.position
-                data.add(pos, thanksData)
-            }
+        val d = deletedData.find {
+            it.title == thanksData.title &&
+            it.text == thanksData.text &&
+            it.thanksImage == thanksData.thanksImage
+        }
+        if (d != null) {
+            val pos = d.position
+            data.add(pos, thanksData)
+            deletedData.remove(d)
+        } else {
+            throw InvalidParameterException()
         }
     }
 
@@ -61,6 +70,11 @@ class ThanksDataStore {
         for (i in 1..100) {
             instance.add(ThanksData("Thanks number ${i}", "I am thankful for ${i} ${if (i == 1) "thing" else "things"}..."))
         }
+    }
+
+    public fun reset() {
+        data.removeAll { true }
+        deletedData.removeAll { true }
     }
 
     private val data: ArrayList<ThanksData> = ArrayList()
